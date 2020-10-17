@@ -9,7 +9,7 @@
 case "$1" in
     start|"")
         cp /usr/bin/oneshot_bergcloud_bridge.sh /tmp/
-        /tmp/oneshot_bergcloud_bridge.sh &
+        /bin/sh -c '/tmp/oneshot_bergcloud_bridge.sh | /usr/bin/logger 2>&1' &
         ;;
     stop)
         killall sh
