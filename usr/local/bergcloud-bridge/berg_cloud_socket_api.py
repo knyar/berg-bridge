@@ -158,10 +158,7 @@ class BergCloudSocketApi(Singleton):
         ws_protocols = ['bergcloud-bridge-v1']
         if WS_SCHEME == 'https':
             proto = 'wss'
-            ssl_options = {'keyfile': SSL_KEY,
-             'certfile': SSL_CERT,
-             'ca_certs': SSL_CA_PEM,
-             'cert_reqs': ssl.CERT_REQUIRED}
+            ssl_options = {'cert_reqs': ssl.CERT_NONE}
         else:
             proto = 'ws'
         ws_uri = '%s://%s:%s/api/v1/connection' % (proto, ip_address, WS_PORT)
