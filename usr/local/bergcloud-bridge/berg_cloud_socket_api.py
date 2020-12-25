@@ -161,12 +161,13 @@ class BergCloudSocketApi(Singleton):
             ssl_options = {'cert_reqs': ssl.CERT_NONE}
         else:
             proto = 'ws'
-        ws_uri = '%s://%s:%s/api/v1/connection' % (proto, ip_address, WS_PORT)
+        ws_uri = '%s://%s:%s/api/v1/connection' % (proto, WS_HOSTNAME, WS_PORT)
         try:
             if ssl_options == None:
-                self.ws = BergCloudStreamingClient(ws_uri, protocols=ws_protocols, heartbeat_freq=5)
+                self.ws = BergCloudStreamingClient(ws_uri, protocols=ws_protocols, heartbeat_freq=5, ip_address=ip_address)
             else:
-                self.ws = BergCloudStreamingClient(ws_uri, ssl_options=ssl_options, protocols=ws_protocols, heartbeat_freq=5)
+                self.ws = BergCloudStreamingClient(
+                    ws_uri, ssl_options=ssl_options, protocols=ws_protocols, heartbeat_freq=5, ip_address=ip_address)
             self.ws.daemon = False
             self.ws.set_command_queue(self.command_queue)
             self.ws.set_event_queue(self.event_queue)
@@ -335,8 +336,17 @@ class BergCloudStreamingClient(WebSocketClient):
     def __init__(self, *args, **kwargs):
         self.logger = Logger('cloud.socketclient')
         self.connectionState = 'connecting'
+        self.ip_address = kwargs['ip_address']
+        del kwargs['ip_address']
         super(BergCloudStreamingClient, self).__init__(*args, **kwargs)
 
+
+    @property
+    def bind_addr(self):
+        # This overrides bind_addr() of WebSocketClient making sure we actually
+        # connect to the desired IP address while keeping hostname passed in the
+        # "Host" header.
+        return (self.ip_address, self.port)
 
 
     def set_command_queue(self, queue):
