@@ -1,7 +1,0 @@
-#!/bin/sh
-
-sync
-mount -o remount,ro /
-reboot -f
-echo "Remount RO exited $?"
-
