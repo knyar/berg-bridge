@@ -1,4 +1,3 @@
-# 2016.01.27 00:42:57 MSK
 import time
 import BaseHTTPServer
 import os
@@ -15,6 +14,14 @@ import watchdog_monitor
 import statistics_monitor
 from urlparse import urlparse
 import bottle
+
+def uptime():
+    with open('/proc/uptime', 'r') as f:
+        return float(f.readline().split()[0])
+
+# This uses system uptime rather than time.time() to make sure
+# NTP time adjustments don't impact uptime values.
+START_TIME = uptime()
 
 class InterruptableWSGIRefServer(bottle.ServerAdapter):
     server = None
@@ -80,6 +87,7 @@ class BottleStats(object):
         self._app.route('/configure', method='GET', callback=self._endpoint)
         self._app.route('/configure', method='POST', callback=self._endpoint_post)
         self._app.route('/magic_debug', method='GET', callback=self._index)
+        self._app.route('/metrics', method='GET', callback=self._metrics)
         self._app.route('/css/<filename>', callback=self._static_asset)
         self._app.route('/js/<filename>', callback=self._static_asset)
 
@@ -150,6 +158,29 @@ class BottleStats(object):
             tpl_vars['endpoint'] = final_url
             return bottle.template('/usr/local/bergcloud-bridge/webassets/endpoint_restart.tpl', **tpl_vars)
 
+
+    def _metrics(self):
+        metrics = {}
+        (eth_speed, eth_duplex, eth_auto, eth_up,) = linux_hub.get_eth_speed()
+        metrics['eth_speed'] = eth_speed
+        metrics['eth_duplex'] = int(eth_duplex)
+        metrics['eth_auto'] = int(eth_auto)
+        metrics['eth_up'] = int(eth_up)
+        metrics['cloud_connected'] = int(self._bridge.berg_cloud_api.isConnected())
+
+        for device in self._sm.loggedPacketsStatistics.keys():
+            if len(self._sm.loggedPacketsStatistics[device]) > 0:
+                stats = self._sm.loggedPacketsStatistics[device][-1]
+                metrics['device_last_timestamp_seconds{device="%s"}' % device] = stats.timestamp
+                metrics['device_last_rssi{device="%s"}' % device] = stats.rssi
+                metrics['device_last_lqi{device="%s"}' % device] = stats.lqi
+
+        t = uptime()
+        metrics['system_uptime_seconds'] = t
+        metrics['process_uptime_seconds'] = t - START_TIME
+
+        bottle.response.content_type = "text/plain"
+        return bottle.template('/usr/local/bergcloud-bridge/webassets/metrics.tpl', metrics=metrics)
 
 
     def _index(self):
@@ -290,10 +321,3 @@ class InterruptableServer(BaseHTTPServer.HTTPServer):
     def handle_error(self, request, client_address):
         logger = customlogger.Logger('webserver')
         logger.error('Error in request %s from %s' % (request, client_address))
-
-
-
-
-+++ okay decompyling ./status_server.pyc 
-# decompiled 1 files: 1 okay, 0 failed, 0 verify failed
-# 2016.01.27 00:42:58 MSK
