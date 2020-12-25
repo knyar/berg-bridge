@@ -75,5 +75,5 @@ while [ 1 ]; do
 done
 
 # We allow only so many restarts until we flat out reboot to fix any potential problems
-echo "I would reboot but I don't want to brick myself!"
-# /sbin/reboot -f
+echo "Rebooting!"
+/sbin/reboot -f
