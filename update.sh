@@ -3,7 +3,7 @@
 
 set -e -u -o pipefail
 
-COPY='usr/local/bergcloud-bridge usr/bin/oneshot_bergcloud_bridge.sh'
+COPY='usr/local/bergcloud-bridge usr/bin/oneshot_bergcloud_bridge.sh etc/ntp.conf'
 BACKUP='/usr/local/bergcloud-bridge/endpoint.override'
 
 BRIDGE=${1:-}
@@ -36,7 +36,7 @@ for FILE in $COPY; do
   ssh root@${BRIDGE} "rm -rf /${FILE}.new"
   scp -rp "${BASEDIR}/${FILE}" "root@${BRIDGE}:/${FILE}.new"
   echo "Backing up old $FILE"
-  ssh root@${BRIDGE} "rm -rf /${FILE}.bak && mv /${FILE} /${FILE}.bak"
+  ssh root@${BRIDGE} "rm -rf /${FILE}.bak; test -e /${FILE} && mv /${FILE} /${FILE}.bak || true"
   echo "Moving $FILE in place"
   ssh root@${BRIDGE} "mv /${FILE}.new /${FILE}"
 done
