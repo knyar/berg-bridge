@@ -28,7 +28,7 @@ ssh root@${BRIDGE} "mount -o remount,rw /"
 for FILE in $BACKUP; do
   TMPFILE="${TMP_PREFIX}${FILE##*/}"
   echo "Backing up $FILE"
-  ssh root@${BRIDGE} "test -e $FILE && cp $FILE $TMPFILE"
+  ssh root@${BRIDGE} "test -e $FILE && cp $FILE $TMPFILE || true"
 done
 
 for FILE in $COPY; do
@@ -44,7 +44,7 @@ done
 for FILE in $BACKUP; do
   TMPFILE="${TMP_PREFIX}${FILE##*/}"
   echo "Restoring $FILE"
-  ssh root@${BRIDGE} "test -e $TMPFILE && cp $TMPFILE $FILE"
+  ssh root@${BRIDGE} "test -e $TMPFILE && cp $TMPFILE $FILE || true"
 done
 
 echo "All done. Please reboot the bridge."
